@@ -1,6 +1,7 @@
 var withComments;
 var withoutComments = new Array();
 var branchDest = new Map();
+var lineNumber =0;
 
 var instructionSet = ["NOOP","INPUTC","INPUTCF","INPUTD","INPUTDF",
 "MOVE","LOADI","LOADP","ADD","ADDI","SUB","SUBI",
@@ -26,6 +27,47 @@ window.onload = function() {
                 reader.readAsText(file);	
 		});
 }
+/**
+ * Finds all the data after .data and passes it to be proccessed
+ */
+function findDataStart(code){
+    for(var i =0; i< code.length; i++){
+        lineNumber++;
+        var lineRead = code[i];
+        if(lineRead.localeCompare(".data") == 0){
+            parseDataSegment(code);
+            break;
+        }else{
+            alert("Expecting (.data) ");
+        }
+    }
+}
+/**
+ * Parse the code after data
+ */
+function parseDataSegment(code){
+    for(var i=0; i < code.length; i++){
+        lineNumber++;
+        var asmLine = code[i];
+        if(asmLine.localeCompare(".code") == 0){
+            break;
+        }else if(asmLine.localeCompare(".data") == 0){
+            continue;
+        }
+        assignDataVariable(code[i]);
+
+    }
+}
+/**
+ * Setting up the varibles of data
+ * 
+ */
+function assignDataVariable(code){
+    var lineParts = code.split(" ");    //Break up the instrcution and get rid of white space
+    lineParts = removeEmpty(lineParts);
+    
+
+}
 /*
  * All lines after .code should start with a jump label (EX:) or opcode.
  * This method creates jump labels while simultaneously checking for incorrect tokens.
@@ -34,18 +76,20 @@ window.onload = function() {
 function getJumps(withoutComments){
     var lineCount =0;
     var codeRead = false;
-    var toReturn = "";
+    var toReturn = new Array();
+    var count =0;
     for(var i=0; i< withoutComments.length; i++){
         var line = withoutComments[i];
         if(line.includes(".code")){
             lineCount =-1;
             codeRead = true;
-            toReturn +=".code";
+            toReturn[count] =".code";
+            
         }
         else if(line.includes(":")){
             branchDest.set(line.substring(0,line.indexOf(":")),lineCount);
-            toReturn += line.substring(line.indexOf(":")+1, line.length);
-
+            toReturn[count] = line.substring(line.indexOf(":")+1, line.length);
+            
         }
         else{
             if(codeRead){
@@ -69,9 +113,9 @@ function getJumps(withoutComments){
                     exit();
                 }
             }
-            toReturn += line;
+            toReturn[i] = line;
         }
-        toReturn +="\n";
+        count ++;
         lineCount++;
         
     }
@@ -128,8 +172,11 @@ function formatFile(){
             count++;
         }
     }
-    console.log(withoutComments);
+    //console.log(withoutComments);
     console.log(getJumps(withoutComments));
+
+    withoutComments = getJumps(withoutComments);
+    findDataStart(withoutComments);
 
     for(var line =0; line <withoutComments.length; line++){
         fileDisplayArea.innerText += withoutComments[line] + "\n";
