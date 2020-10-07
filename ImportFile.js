@@ -1,22 +1,22 @@
-var withComments;           
-var codeSegmentStart;            
-var withoutComments = new Array();
-var branchDest = new Map();
-var valueMapping = new Map();
-var lineNumber =0;
-var dataLocation = 0;
-var arrayNames = new Array();
-var dataValues = new Array();
-var varibleNames = new Array();
+let withComments;           
+let codeSegmentStart;            
+let withoutComments = new Array();
+let branchDest = new Map();
+let valueMapping = new Map();
+let lineNumber =0;
+let dataLocation = 0;
+let arrayNames = new Array();
+let dataValues = new Array();
+let varibleNames = new Array();
 
-var machineCode = "";
+let machineCode = "";
 
-var instructionSet = ["NOOP","INPUTC","INPUTCF","INPUTD","INPUTDF",
+let instructionSet = ["NOOP","INPUTC","INPUTCF","INPUTD","INPUTDF",
 "MOVE","LOADI","LOADP","ADD","ADDI","SUB","SUBI",
 "LOAD","LOADF","STORE","STOREF",
 "SHIFTL","SHIFTR","CMP","JUMP","BRE","BRNE","BRG","BRGE"];
 
-var instructionFormat = ["0000_", // NOOP
+let instructionFormat = ["0000_", // NOOP
 "0001_", // INPUTC
 "0001_", // INPUTCF
 "0001_", // INPUTD
@@ -47,13 +47,13 @@ var instructionFormat = ["0000_", // NOOP
 
 
 window.onload = function() {
-		var fileInput = document.getElementById('fileInput');
-		var fileDisplayArea = document.getElementById('fileDisplayArea');
+    let fileInput = document.getElementById('fileInput');
+    let fileDisplayArea = document.getElementById('fileDisplayArea');
 
 		fileInput.addEventListener('change', function(e) {
-			var file = fileInput.files[0];
+			let file = fileInput.files[0];
 		
-				var reader = new FileReader();
+            let reader = new FileReader();
                 //Pass each line to the remove comments function
 				reader.onload = function(e) {
                     fileDisplayArea.innerText = reader.result;
@@ -64,13 +64,15 @@ window.onload = function() {
                 reader.readAsText(file);	
 		});
 }
+
+//--------------------Below deals with all of the data in the .data portion-----------
 /**
  * Finds all the data after .data and passes it to be proccessed
  */
 function findDataStart(code){
-    for(var i =0; i< code.length; i++){
+    for(let i =0; i< code.length; i++){
         lineNumber++;
-        var lineRead = code[i];
+        let lineRead = code[i];
         if(lineRead.localeCompare(".data") == 0){
             parseDataSegment(code);
             break;
@@ -83,9 +85,9 @@ function findDataStart(code){
  * Parse the code after data
  */
 function parseDataSegment(code){
-    for(var i=0; i < code.length; i++){
+    for(let i=0; i < code.length; i++){
         lineNumber++;
-        var asmLine = code[i];
+        let asmLine = code[i];
         if(asmLine.localeCompare(".code") == 0){
             break;
         }else if(asmLine.localeCompare(".data") == 0){
@@ -100,16 +102,16 @@ function parseDataSegment(code){
  * 
  */
 function assignDataVariable(code){
-    var lineParts = code.split(" ");    //Break up the instrcution and get rid of white space
+    let lineParts = code.split(" ");    //Break up the instrcution and get rid of white space
     lineParts = removeEmpty(lineParts);
-    var varibleName = lineParts[0];
+    let varibleName = lineParts[0];
     valueMapping.set(varibleName,dataLocation);
-    var BYTE = lineParts[1];
+    let BYTE = lineParts[1];
     if(BYTE.localeCompare("BYTE") == 1){
         alert("Expected data type BYTE");
     }
-    for(var i =2; i < lineParts.length; i++){
-        var innerString = lineParts[i];
+    for(let i =2; i < lineParts.length; i++){
+        let innerString = lineParts[i];
         if(innerString.localeCompare(",") == 0){
             arrayNames.push(varibleName);
             continue;
@@ -140,12 +142,12 @@ function assignDataVariable(code){
 function parseCodeSegment(code){
     codeSegmentStart = lineNumber -1;
     
-    for(var i =codeSegmentStart; i < code.length; i++){
+    for(let i =codeSegmentStart; i < code.length; i++){
         lineNumber ++;
-        var lineScanner = code[i].split(" ");
+        let lineScanner = code[i].split(" ");
         lineScanner = removeEmpty(lineScanner);
 
-        var opcode = lineScanner[0];
+        let opcode = lineScanner[0];
         if(opcode.localeCompare("NOOP") == 0){
             getOpCodeBits("NOOP");
             parseNOOP();
@@ -160,7 +162,7 @@ function parseCodeSegment(code){
         }
         else if(opcode.localeCompare("CMP")== 0){
             getOpCodeBits("CMP");
-            //parseCMP(lineScanner);
+            parseCMP(lineScanner);
         }
         else if(opcode.localeCompare("LOAD") ==0){
             getOpCodeBits("LOAD");
@@ -172,21 +174,21 @@ function parseCodeSegment(code){
         }
         else if(opcode.localeCompare("STOREF") == 0){
             getOpCodeBits("STOREF");
-            //parseSTOREF(lineScanner);
+            parseSTOREF(lineScanner);
         }
         else if(opcode.localeCompare("LOADF") == 0){
             getOpCodeBits("LOADF");
-            //parseLOADF(lineScanner);
+            parseLOADF(lineScanner);
         }
         else if(opcode.localeCompare("INPUT") == 0){
             getOpCodeBits("INPUT");
             //parseINPUT(lineScanner);
         }
-        else if(opcode.localeCompare("BRE") == 0 || opcode.localeCompare("BRZ")){
+        else if(opcode.localeCompare("BRE") == 0 || opcode.localeCompare("BRZ") ==0){
             getOpCodeBits("BRE");
             //parseBRE(lineScanner, lineNumber - codeSegmentStart);
         }
-        else if(opcode.localeCompare("BRNE") || opcode.localeCompare("BRNZ")){
+        else if(opcode.localeCompare("BRNE") ==0 || opcode.localeCompare("BRNZ") ==0){
             getOpCodeBits("BRNE");
             //parseBRNE(lineScanner, lineNumber - codeSegmentStart);
         }
@@ -196,11 +198,11 @@ function parseCodeSegment(code){
         }
         else if(opcode.localeCompare("BRGE") == 0){
             getOpCodeBits("BRGE");
-            //parseBRGE(lineScanner,lineNumber - codeSegmentStart);
+            parseBRGE(lineScanner,lineNumber - codeSegmentStart -1);
         }
         else if(opcode.localeCompare("JUMP") ==0){
             getOpCodeBits("JUMP");
-            //parseJUMP(lineScanner,lineNumber - codeSegmentStart);
+            parseJUMP(lineScanner,lineNumber - codeSegmentStart);
         }
         else if(opcode.localeCompare("ADD") == 0){
             getOpCodeBits("ADD");
@@ -208,7 +210,7 @@ function parseCodeSegment(code){
         }
         else if(opcode.localeCompare("ADDI") == 0){
             getOpCodeBits("ADDI");
-            //parseADDI(lineScanner);
+            parseADDI(lineScanner);
         }
         else if(opcode.localeCompare("SUB") == 0){
             getOpCodeBits("SUB");
@@ -253,37 +255,19 @@ function parseCodeSegment(code){
 
 
 }
-/**
- * Adds the opcode bits to the corresponding instruction to the final output of macheine code
- */
-function getOpCodeBits(instruction){
-    for(var i=0; i< instructionSet.length; i++){
-        if(instruction.localeCompare(instructionSet[i]) ==0){
-            machineCode += instructionFormat[i];
-            return;
-        }
-    }
-    errorMessage("Expecting Opcode");
-}
 
-/**
- * Takes in the error as input and outputs to the user what line the error is occuring on 
- */
-function errorMessage(error){
-    alert(error + " on line " + lineNumber);
-}
 /*
  * All lines after .code should start with a jump label (EX:) or opcode.
  * This method creates jump labels while simultaneously checking for incorrect tokens.
  * 
  */
 function getJumps(withoutComments){
-    var lineCount =0;
-    var codeRead = false;
-    var toReturn = new Array();
-    var count =0;
-    for(var i=0; i< withoutComments.length; i++){
-        var line = withoutComments[i];
+    let lineCount =0;
+    let codeRead = false;
+    let toReturn = new Array();
+    let count =0;
+    for(let i=0; i< withoutComments.length; i++){
+        let line = withoutComments[i];
         if(line.includes(".code")){
             lineCount =-1;
             codeRead = true;
@@ -298,15 +282,15 @@ function getJumps(withoutComments){
         }
         else{
             if(codeRead){
-                var findOpCode = line.split(" ");
+                let findOpCode = line.split(" ");
                 findOpCode = removeEmpty(findOpCode); //To remove blank spots in array
-                var validOpCode = false;
-                var validString = false;
-                var firstToken = "";
-                for(var j=0; j<findOpCode.length; j++){
+                let validOpCode = false;
+                let validString = false;
+                let firstToken = "";
+                for(let j=0; j<findOpCode.length; j++){
                     firstToken = findOpCode[j];
                     validString = true;
-                    for(var k = 0; k < instructionSet.length; k++){
+                    for(let k = 0; k < instructionSet.length; k++){
                         if(firstToken.localeCompare(instructionSet[k]) == 0){
                             validOpCode = true;
                             break;
@@ -326,11 +310,12 @@ function getJumps(withoutComments){
     }
     return toReturn;
 }
+//-------------------Below is Formatting methods to add spaces and take out blank array spots------
 function removeEmpty(instruction){
-    var count =0;
-    var newInstruction = new Array();
+    let count =0;
+    let newInstruction = new Array();
 
-    for(var i=0; i < instruction.length;i++){
+    for(let i=0; i < instruction.length;i++){
         if(instruction[i] != ""){
             newInstruction[count] = instruction[i];
             count++;
@@ -344,7 +329,7 @@ function removeEmpty(instruction){
  */
 function removeComments(lines){
     
-    for(var line =0; line< lines.length; line++){
+    for(let line =0; line< lines.length; line++){
         
         lines[line] = lines[line].replace(new RegExp(",",'g') , " , ");
 		lines[line] = lines[line].replace("]" , " ] ");
@@ -353,7 +338,7 @@ function removeComments(lines){
 		lines[line] = lines[line].replace("{" , " { ");
 		lines[line] = lines[line].replace("+" , " + ");
         lines[line] = lines[line].replace("-" , " - ");
-        var curString = lines[line];
+        let curString = lines[line];
         if (curString.startsWith(";")){
             lines[line] = "";
         }else if(curString.includes(";")){
@@ -363,15 +348,17 @@ function removeComments(lines){
     }
     withComments =lines;
 }
+
+//----------------------Below is the main methods running everything--------------------
 /**
- * Place the code inside "withoutComments" That no longer has comments for the file
+ * Main method - Formats output of the assembly and runs the code through methods
  */
-function formatFile(){
-    var fileDisplayArea = document.getElementById('fileDisplayArea');
+function mainMethod(){
+    let fileDisplayArea = document.getElementById('fileDisplayArea');
     fileDisplayArea.innerText = "";
-    var count = 0;
+    let count = 0;
     //Remove white spaces
-    for(var i=0; i < withComments.length;i++){
+    for(let i=0; i < withComments.length;i++){
         if(withComments[i] != ""){
             withoutComments[count] = withComments[i];
             count++;
@@ -379,37 +366,106 @@ function formatFile(){
     }
     //console.log(withoutComments);
     
-
+    //Run commands to assemble code
     withoutComments = getJumps(withoutComments);
     findDataStart(withoutComments);
     parseCodeSegment(withoutComments);
     console.log(withoutComments);
     console.log(lineNumber);
     console.log(machineCode);
-    for(var line =0; line <withoutComments.length; line++){
-        fileDisplayArea.innerText += withoutComments[line] + "\n";
-    }
 
+
+    fileDisplayArea.innerHTML += "<b>Assembly Code:</b>\n";
+    
+    for(let line =0; line <withoutComments.length; line++){
+        let eachLine = withoutComments[line].split(" ");
+        eachLine =removeEmpty(eachLine);
+
+        //Format the array to have 3 parts
+        if(eachLine.length > 2){
+            if(eachLine[1].localeCompare("[") ==1){
+                for(let i =3; i< eachLine.length; i++){
+                    if(eachLine[2].localeCompare(",") == 0){
+                        eachLine[2] = "";
+                    }
+                    eachLine[2] += eachLine[i];
+                    eachLine[i] = "";
+                }
+            }else{
+                for(let i = 2; i < eachLine.length; i++){
+                    if(eachLine[i].localeCompare("]") == 0){
+                        eachLine[1] += "]";
+                        eachLine[i] = "";
+                        eachLine[i+1] ="";
+                        break;
+                    }else{
+                        eachLine[1] += eachLine[i];
+                        eachLine[i] = "";
+                    }
+                }
+                
+            }
+        }
+
+        //Place into the table
+        eachLine =removeEmpty(eachLine);
+        let x = document.getElementById('assemblyTable').insertRow(line);
+        
+        //Add line numbers
+        if(eachLine.length == 3){
+            eachLine[3] = eachLine[2];
+            eachLine[2] = eachLine[1];
+            eachLine[1] = eachLine[0];
+            eachLine[0] = line;
+        }else if (eachLine.length == 2){
+            eachLine[3] = "";
+            eachLine[2] = eachLine[1];
+            eachLine[1] = eachLine[0];
+            eachLine[0] = line;
+        }else{
+            eachLine[3] = "";
+            eachLine[2] = "";
+            eachLine[1] = eachLine[0];
+            eachLine[0] = line;
+        }
+        
+        for(let parts =0; parts < eachLine.length; parts++){
+            
+            let y = x.insertCell(parts);
+            
+            y.innerHTML = eachLine[parts];
+        } 
+    }
+    document.getElementById("displayMachinetext").innerHTML +=  "<b>Machine Code:</b><br>";
+    let formatMachine = machineCode.split("/n");
+    for(let print =0; print < formatMachine.length; print++ ){
+        document.getElementById("displayMachine").innerText +=   formatMachine[print];
+        document.getElementById("displayMachine").innerHTML += "<br>";
+        
+    }
+   
+    
+    
 }
 function formatInput(){
     let inputP = document.getElementById("textInput");
     let lines =  inputP.innerText.split("\n");
-    var count =0;
+    let count =0;
     removeComments(lines);
     inputP.innerText ="";
     //remove white spaces
-    for(var i=0; i < withComments.length;i++){
+    for(let i=0; i < withComments.length;i++){
         if(withComments[i] != ""){
             withoutComments[count] = withComments[i];
             count++;
         }
     }
-    for(var line =0; line < withoutComments.length; line++){
+    for(let line =0; line < withoutComments.length; line++){
         inputP.innerText += withoutComments[line] + "\n";
     }
 
 }
-//------------------------------BELOW is all of the parses for each instrcution---------------
+//------------------------------Below is all of the parses for each instrcution---------------
 
 /**
  * NOOP instruction in machine code
@@ -419,10 +475,22 @@ function parseNOOP(){
 	machineCode += "\n";
 }
 /**
+ * ADDI instruction in machine code
+ */
+function parseADDI(code){
+    machineCode += getRegisterName(code[1]);
+    getComma(code[2]);
+    machineCode += "00_";
+    let immediateValue = code[3];
+    checkImmediateValueOutOfBounds(immediateValue);
+    machineCode += convertStringToBinary(immediateValue);
+    machineCode += "\n";
+}
+/**
  * LOADI instruction and machine code
  */
 function parseLOADI(code){
-    var reg = code[1];
+    let reg = code[1];
     machineCode += getRegisterName(reg);
     getComma(code[2]);
     machineCode += "00_";
@@ -438,19 +506,19 @@ function parseLOAD(code){
     machineCode += "00_";
     getComma(code[2]);
     getLeftBracket(code[3]);
-    var dataValue = code[4];
-    var next = code[5];
+    let dataValue = code[4];
+    let next = code[5];
 
     if(next.localeCompare("+") == 0){
-        var offset = parseInt(code[6]);
-        var newOffset = valueMapping.get(dataValue) + offset;
+        let offset = parseInt(code[6]);
+        let newOffset = valueMapping.get(dataValue) + offset;
         checkAddressOutOfBounds(newOffset);
         machineCode += convertStringToBinary(newOffset);
         getRightBracket(code[7]);
     }
     else if(next.localeCompare("-") == 0){
-        var offset = parseInt(code[6]);
-        var newOffset = valueMapping.get(dataValue) - offset;
+        let offset = parseInt(code[6]);
+        let newOffset = valueMapping.get(dataValue) - offset;
         checkAddressOutOfBounds(newOffset);
         machineCode += convertStringToBinary(newOffset);
         getRightBracket(code[7]);
@@ -466,11 +534,109 @@ function parseLOAD(code){
 
 }
 /**
+ * LOADF instruction to machine code
+ */
+function parseLOADF(code){
+    machineCode += getRegisterName(code[1]);
+    getComma(code[2]);
+    getLeftBracket(code[3]);
+    let dataValue = code[4];
+    getPlus(code[5]);
+    machineCode += getRegisterName(code[6]);
+
+    if(code[7].localeCompare("+") == 0){
+        let offset = code[8];
+        let newOffset = valueMapping.get(dataValue) + offset;
+        warnAddressOutOfBounds(newOffset);
+        machineCode += convertStringToBinary(newOffset);
+        getRightBracket(code[9]);
+    }
+    else if(code[7].localeCompare("-") == 0){
+        let offset = code[8];
+        let newOffset = valueMapping.get(dataValue) - offset;
+        warnAddressOutOfBounds(newOffset);
+        machineCode += convertStringToBinary(newOffset);
+        getRightBracket(code[9]);
+    }
+    else if(code[7].localeCompare("]") == 0){
+        machineCode += convertStringToBinary(valueMapping.get(dataValue));
+    }
+    else{
+        errorMessage("Expecting +,-, or ]");
+    }
+    machineCode += "\n";
+}
+/**
+ * STOREF instruction to machine code
+ */
+function parseSTOREF(code){
+    let temp = "";
+    getLeftBracket(code[1]);
+    let dataValue = code[2];
+    getPlus(code[3]);
+    temp += getRegisterName(code[4]);
+    let next = code[5];
+    if(next.localeCompare("+") == 0){
+        let offset = parseInt(code[6]);
+        let newOffset = valueMapping.get(dataValue) + offset;
+        warnAddressOutOfBounds(newOffset);
+        temp += convertStringToBinary(newOffset);
+        getRightBracket(code[7]);
+    }
+    else if(next.localeCompare("-") ==0){
+        let offset = parseInt(code[6]);
+        let newOffset = valueMapping.get(dataValue) - offset;
+        warnAddressOutOfBounds(newOffset);
+        temp += convertStringToBinary(newOffset);
+        getRightBracket(code[7]);
+    }
+    else if(next.localeCompare("]") ==0){
+        temp += convertStringToBinary(valueMapping.get(dataValue));
+    }else{
+        errorMessage("Expecting +,- or ]");
+    }
+    getComma(code[6]);
+    machineCode += getRegisterName(code[7]);
+    machineCode += temp;
+    machineCode += "\n";
+}
+
+/**
+ * CMP instruction to machine code
+ */
+function parseCMP(code){
+
+    machineCode += getRegisterName(code[1]);
+    getComma(code[2]);
+    machineCode += getRegisterName(code[3]);
+    machineCode += "00000000";
+    machineCode += "\n";
+
+}
+/**
+ * BRGE instruction to machine code
+ */
+function parseBRGE(code, line){
+    machineCode += "00_11_";
+    machineCode += branchDifference(line, code[1]);
+    machineCode += "\n";
+}
+/**
+ * Jump instruction to machine code
+ */
+function parseJUMP(code, line){
+    machineCode += "00_00_";
+    machineCode += branchDifference(line, code[1]);
+    machineCode += "\n";
+}
+
+//------------------------------------Helper methods for the instructions-----------------
+/**
  * Maps a string to binary by looping through value
  */
 function mapIntoBinary(string){
-    var toReturn = string;
-    for(var i =0; i < string.length; i++){
+    let toReturn = string;
+    while(toReturn.length < 8){
         toReturn = 0 + toReturn;
     }
     return toReturn;
@@ -479,10 +645,11 @@ function mapIntoBinary(string){
  * converts a string to binary used for immediate values
  */
 function convertStringToBinary(input){
+    input = parseInt(input);
     if(isNaN(input)){
         errorMessage("Expecting immediate value (Integer) ");
     }else{
-        var eightBit = mapIntoBinary(input.toString(2));
+        let eightBit = mapIntoBinary(input.toString(2));
         if(eightBit.length > 8){  //Case of negative
             return eightBit.substring(eightBit.length-8, eightBit.length);
         }
@@ -491,12 +658,30 @@ function convertStringToBinary(input){
 
 }
 
+function branchDifference(line, destination){
+    let diff = branchDest.get(destination) - line;
+    return convertStringToBinary(diff);
+}
 /**
  * Function makes sure the address is within the given 0 -64
  */
 function checkAddressOutOfBounds(address){
     if(address < 0 || address >63){
         error("Adress out of bounds, attempting to access address " + address);
+    }
+}
+function warnAddressOutOfBounds(address){
+    if(address < 0 || address > 63){
+       alert( "Warning: Address may be out of bounds depending on the value of the register.\n"
+                + "         Assuming it is 0, then attempting to access address " + address +".");
+    }
+}
+function checkImmediateValueOutOfBounds(immediateValue){
+    if(immediateValue.includes("-")){
+        errorMessage("Expecting positive immediate value. Negative number given");
+    }
+    if(immediateValue < -128 || immediateValue > 127){
+        errorMessage("Immediate value " + immediateValue + " out of bounds");
     }
 }
 /**
@@ -519,8 +704,16 @@ function getLeftBracket(leftBracket){
  * Checking for a Right bracket
  */
 function getRightBracket(rightBracket){
-    if(leftBracket.localeCompare("]") == 1){
+    if(rightBracket.localeCompare("]") == 1){
         errorMessage("Expected left bracket");
+    }
+}
+/**
+ * Checking for the plus symbol
+ */
+function getPlus(plus){
+    if(plus.localeCompare("+") == 1){
+        error("Expected Right bracket");
     }
 }
 /**
@@ -545,7 +738,28 @@ function getRegisterName(register){
         return "0";
     }
 }
+/**
+ * Adds the opcode bits to the corresponding instruction to the final output of macheine code
+ */
+function getOpCodeBits(instruction){
+    for(let i=0; i< instructionSet.length; i++){
+        if(instruction.localeCompare(instructionSet[i]) ==0){
+            machineCode += instructionFormat[i];
+            return;
+        }
+    }
+    errorMessage("Expecting Opcode");
+}
 
+/**
+ * Takes in the error as input and outputs to the user what line the error is occuring on 
+ */
+function errorMessage(error){
+    alert(error + " on line " + lineNumber);
+}
+
+
+//---------------------------Display options for the html page--------------------------
 /**
  * Choice to show the file open options
  */
